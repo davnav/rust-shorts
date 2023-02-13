@@ -1,3 +1,4 @@
+// First program to demonstrate http request in Rust
 // Experiments on how to build a http request in Rust programming language using reqwest
 
 // This is the custom type of error used for error propagation
