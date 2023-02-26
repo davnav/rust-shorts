@@ -1,34 +1,46 @@
-// First program to demonstrate http request in Rust
-// Experiments on how to build a http request in Rust programming language using reqwest
+//working with cookies using reqwest
 
-// This is the custom type of error used for error propagation
-// This case we have only standard error 
-type MyError = Box<dyn std::error::Error>;
+use reqwest::{Url, header,ClientBuilder, Client};
 
-//tokio run time is used for running the code asyncronously
+type MyError = Box< dyn std::error::Error>;
+
 #[tokio::main]
+async fn main() -> Result<(),MyError> {
 
-// Below is the point where tokio runtime start executing - can be considered as our main program logic
-async fn main() -> Result<(), MyError> {
+    let payload = [("freeform","naveen")];
 
-    // Spawning a tokio thread to execure the async get request using reqwest
-    let handle = tokio::spawn(async {
-        let body = reqwest::get("https://httpbin.org/get")
-            .await
-            .unwrap()
-            .text()
-            .await
-            .unwrap();
-        println!("{}", body);
-    });
+    // let url = Url::parse_with_params("https://httpbin.org/cookies/set",&payload)?;
 
-    // get request to httpbin to get headers
-    // As this is an asynchronours call, we need to wait for the response to get it finished using 'await' 
-    let res = reqwest::get("https://httpbin.org/headers").await?;
+    // println!("{:?}",url);
 
-    // printing the headers
-    println!("{:?}", res.headers());
+    let mut request_headers = header::HeaderMap::new();
+    request_headers.insert(
+        header::COOKIE,
+        header::HeaderValue::from_static("freeform=naveen"),
+    );
 
-    handle.await;
+    let client = ClientBuilder::new()
+                .default_headers(request_headers)
+                .cookie_store(true)
+                .build().unwrap();
+
+    let res = client.get("https://httpbin.org/cookies/set").send().await?;
+    let url = res.url().clone();
+    // let res = reqwest::get(url).await?;
+    // println!("{}",res.status());
+    // println!("{:?}",res.headers());
+    // let cookies = res.cookies();
+    let body = res.text().await?;
+    // for i in cookies {
+    //     println!("{:?}",i);
+    // }
+    println!("{:?}",body);
+    // let res = reqwest::get(url).await?;
+    let res = client.get("https://httpbin.org/cookies").send().await?;
+
+    let body = res.text().await?;
+    println!("{:?}",body);
+
+
     Ok(())
 }
